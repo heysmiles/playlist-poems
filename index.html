@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playlist Poems</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128220;</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===================== CONNECT SCREEN ===================== -->
+    <section id="screen-connect" class="screen active">
+      <div class="hero">
+        <div class="hero-mark">📜</div>
+        <h1>Playlist Poems</h1>
+        <p class="tagline">Turn your Liked Songs into poems.<br/>Every track title is a line. The playlist is the poem.</p>
+      </div>
+
+      <div class="example-poem">
+        <p class="example-label">like this —</p>
+        <p class="example-lines">
+          I guess I just feel like<br/>
+          When you're around<br/>
+          This is home<br/>
+          Don't look down<br/>
+          &hellip;<br/>
+          I will not say goodbye<br/>
+          Until the day I die
+        </p>
+      </div>
+
+      <div class="connect-box">
+        <label for="client-id">Spotify Client ID</label>
+        <input id="client-id" type="text" placeholder="paste your Spotify app's Client ID" autocomplete="off" spellcheck="false" />
+        <button id="btn-connect" class="btn btn-primary">Connect Spotify</button>
+        <button id="btn-demo" class="btn btn-ghost">Try the demo (no login)</button>
+
+        <details class="help">
+          <summary>How do I get a Client ID? (2 minutes, free)</summary>
+          <ol>
+            <li>Go to <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> and log in with your Spotify account.</li>
+            <li>Click <b>Create app</b>. Name it anything (e.g. “Playlist Poems”).</li>
+            <li>Set the <b>Redirect URI</b> to exactly: <code id="redirect-uri-display"></code> <button class="btn-copy" id="btn-copy-uri" type="button">copy</button></li>
+            <li>Check <b>Web API</b>, save, and copy the <b>Client ID</b> into the box above.</li>
+          </ol>
+          <p>Your music never leaves your browser — this site has no server.</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- ===================== LIBRARY LOADING SCREEN ===================== -->
+    <section id="screen-loading" class="screen">
+      <h2>Reading your Liked Songs…</h2>
+      <p class="muted">Gathering every title you've ever loved. Big libraries take a moment.</p>
+      <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+      <p id="progress-text" class="muted">0 songs</p>
+    </section>
+
+    <!-- ===================== COMPOSE SCREEN ===================== -->
+    <section id="screen-compose" class="screen">
+      <header class="topbar">
+        <span class="brand">📜 Playlist Poems</span>
+        <span id="library-stats" class="muted"></span>
+        <button id="btn-logout" class="btn btn-ghost btn-small">Disconnect</button>
+      </header>
+
+      <div class="compose-form">
+        <label class="big-label" for="poem-title">What should the poem be titled?</label>
+        <input id="poem-title" type="text" placeholder="e.g. August poem, Leaving Home, For Dad…" maxlength="100" />
+
+        <label class="big-label" for="poem-about">What more should it be about? <span class="optional">(optional)</span></label>
+        <textarea id="poem-about" rows="3" placeholder="the mood, the story, who it's for, how it should end…"></textarea>
+
+        <div class="options-row">
+          <div class="option">
+            <label for="poem-length">Length</label>
+            <select id="poem-length">
+              <option value="10">~10 lines</option>
+              <option value="14" selected>~14 lines</option>
+              <option value="18">~18 lines</option>
+              <option value="24">~24 lines</option>
+            </select>
+          </div>
+          <div class="option">
+            <label for="engine">Composer</label>
+            <select id="engine">
+              <option value="local" selected>Built-in composer</option>
+              <option value="claude">Claude AI (bring your key)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="claude-key-row" class="hidden">
+          <label for="claude-key">Anthropic API key</label>
+          <input id="claude-key" type="password" placeholder="sk-ant-…" autocomplete="off" />
+          <p class="muted small">Sent directly from your browser to Anthropic. Never stored anywhere else.</p>
+        </div>
+
+        <button id="btn-compose" class="btn btn-primary btn-big">Write my poem</button>
+        <p id="compose-error" class="error hidden"></p>
+      </div>
+    </section>
+
+    <!-- ===================== PREVIEW / EDIT SCREEN ===================== -->
+    <section id="screen-preview" class="screen">
+      <header class="topbar">
+        <button id="btn-back" class="btn btn-ghost btn-small">← Start over</button>
+        <span class="brand">📜</span>
+        <button id="btn-regenerate" class="btn btn-ghost btn-small">↻ Regenerate</button>
+      </header>
+
+      <h2 id="preview-title" class="poem-title"></h2>
+      <p id="preview-about" class="muted center"></p>
+
+      <ol id="poem-lines" class="poem"></ol>
+
+      <div class="add-line">
+        <input id="line-search" type="text" placeholder="add a line… search your liked songs" />
+        <ul id="line-search-results" class="search-results hidden"></ul>
+      </div>
+
+      <div class="save-row">
+        <label class="checkbox"><input type="checkbox" id="playlist-public" /> make playlist public</label>
+        <button id="btn-save" class="btn btn-primary btn-big">Save poem to Spotify</button>
+        <p id="save-error" class="error hidden"></p>
+      </div>
+    </section>
+
+    <!-- ===================== DONE SCREEN ===================== -->
+    <section id="screen-done" class="screen">
+      <div class="hero">
+        <div class="hero-mark">✒️</div>
+        <h2>Your poem is in your library.</h2>
+        <p id="done-poem" class="done-poem"></p>
+        <a id="done-link" class="btn btn-primary" target="_blank" rel="noopener">Open in Spotify</a>
+        <button id="btn-another" class="btn btn-ghost">Write another</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
