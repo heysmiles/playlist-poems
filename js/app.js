@@ -35,11 +35,12 @@ $("btn-copy-uri").addEventListener("click", () => {
   setTimeout(() => ($("btn-copy-uri").textContent = "copy"), 1500);
 });
 
-$("client-id").value = spotify.savedClientId();
+if (spotify.savedClientId() && spotify.savedClientId() !== spotify.DEFAULT_CLIENT_ID) {
+  $("client-id").value = spotify.savedClientId();
+}
 
 $("btn-connect").addEventListener("click", () => {
-  const id = $("client-id").value.trim();
-  if (!id) { alert("Paste your Spotify Client ID first (see the how-to below the button)."); return; }
+  const id = $("client-id").value.trim() || spotify.DEFAULT_CLIENT_ID;
   spotify.beginAuth(id);
 });
 

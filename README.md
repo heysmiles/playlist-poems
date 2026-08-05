@@ -16,23 +16,25 @@ You give it a **title** and (optionally) **what it should be about**. It reads y
 
 ## Try it
 
-Open the site, hit **“Try the demo”** to play with a sample library — no login needed.
+**Live site: [heysmiles.github.io/playlist-poems](https://heysmiles.github.io/playlist-poems/)** — hit **Connect Spotify** and go, or **“Try the demo”** to play with a sample library, no login needed.
 
-To use your real Liked Songs you need a free Spotify **Client ID** (2 minutes):
+> New Spotify apps run in development mode, so the live site works for the owner and up to 25 invited users. Anyone else: fork it and drop in your own Client ID (below) — it takes 2 minutes.
+
+To run your own copy you need a free Spotify **Client ID**:
 
 1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) and log in with your Spotify account.
 2. Click **Create app** — name it anything (e.g. “Playlist Poems”).
-3. Set the **Redirect URI** to the exact URL where you're running the app (shown in the app's setup help — e.g. `https://yourname.github.io/playlist-poems/` or `http://127.0.0.1:8080/`).
-4. Check **Web API**, save, and copy the **Client ID** into the app.
+3. Set the **Redirect URI** to the exact URL where you're running the app (shown under "Advanced" on the connect screen — e.g. `https://yourname.github.io/playlist-poems/` or `http://127.0.0.1:8080/`).
+4. Check **Web API**, save, and either paste the Client ID under **Advanced** on the connect screen or replace `DEFAULT_CLIENT_ID` in [js/spotify.js](js/spotify.js).
 
-> Why bring your own Client ID? Spotify requires each app deployment to be registered, and new Spotify apps run in "development mode" (the owner + up to 25 invited users). Registering your own takes two minutes and means your data flows only between your browser and Spotify.
+> A Client ID is public by design — PKCE apps have no secret — so shipping one in the repo is safe. Registering your own just points the app at your Spotify developer account, and your data always flows only between your browser and Spotify.
 
 ## Run locally
 
 No build step — it's plain HTML/CSS/JS.
 
 ```bash
-git clone https://github.com/YOURNAME/playlist-poems
+git clone https://github.com/heysmiles/playlist-poems
 cd playlist-poems
 python3 -m http.server 8080
 ```

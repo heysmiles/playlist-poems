@@ -1,5 +1,11 @@
 // Spotify Web API client with Authorization Code + PKCE (no server, no secret).
 
+// Default Spotify app for this deployment. A Client ID is public by design
+// (PKCE apps have no secret) — forks should register their own at
+// https://developer.spotify.com/dashboard and replace it or use the
+// "Advanced" field on the connect screen.
+export const DEFAULT_CLIENT_ID = "c020f0b17d1045589193b63630a61d10";
+
 const SCOPES = "user-library-read playlist-modify-private playlist-modify-public";
 const AUTH_URL = "https://accounts.spotify.com/authorize";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
