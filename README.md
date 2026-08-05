@@ -50,7 +50,7 @@ It's a static site — GitHub Pages works out of the box:
 
 ## Two composers
 
-- **Built-in composer** (default) — a local heuristic engine: cleans titles ("(Remastered)" begone), scores them against your poem's title/description via a theme lexicon, classifies lines as openers / connectors / questions / closers, and assembles them into an arc. Free, instant, offline.
+- **Built-in composer** (default) — writes the poem the way a person does: line by line. The first line sets a feeling (or you choose it with the "How should it begin?" field), and every next line is picked by how well it *follows* what's already written — the previous line most of all, the line before that a little, the poem's accumulated mood after that, with the title as only a gentle pull. Lines that end mid-thought attract lines that complete them, questions attract answers, word-links decay so the poem drifts through associations instead of circling one word, and endings are held back for a closing cadence. Free, instant, offline.
 - **Claude AI** (optional) — paste an Anthropic API key and Claude composes the poem from your library for noticeably more coherent verse. The key goes directly from your browser to Anthropic and is never stored.
 
 Either way you can reorder, swap, remove, and add lines before saving.

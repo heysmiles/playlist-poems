@@ -6,12 +6,12 @@ const MAX_CANDIDATES = 900;
 
 import { prepareLibrary, composePoem } from "./poem.js";
 
-export async function composeWithClaude(apiKey, library, title, about, target) {
+export async function composeWithClaude(apiKey, library, title, about, target, firstSong = null) {
   // Trim huge libraries: keep the heuristically-relevant half plus a random slice
   // for variety, so the prompt stays a reasonable size.
   let candidates = library;
   if (library.length > MAX_CANDIDATES) {
-    const relevant = composePoem(library, title, about, MAX_CANDIDATES / 2, 7);
+    const relevant = composePoem(library, title, about, MAX_CANDIDATES / 2, 7, firstSong);
     const keys = new Set(relevant.map((t) => t.uri || t.line));
     const rest = library.filter((t) => !keys.has(t.uri || t.line));
     for (let i = rest.length - 1; i > 0; i--) {
@@ -20,18 +20,21 @@ export async function composeWithClaude(apiKey, library, title, about, target) {
     }
     candidates = [...relevant, ...rest.slice(0, MAX_CANDIDATES - relevant.length)];
   }
+  if (firstSong && !candidates.includes(firstSong)) candidates = [firstSong, ...candidates];
+  const firstIndex = firstSong ? candidates.indexOf(firstSong) : -1;
 
   const numbered = candidates.map((t, i) => `${i}. ${t.line} — ${t.artist}`).join("\n");
   const prompt = `You are a poet who writes "playlist poems": poems built ONLY from existing song titles, in order, so that reading the playlist top to bottom reads as a poem.
 
 Poem title: "${title}"
 ${about ? `It should also be about: ${about}` : ""}
+${firstIndex >= 0 ? `The poem MUST open with song #${firstIndex} ("${firstSong.line}").` : ""}
 
 Rules:
 - Use ONLY songs from the numbered list below. Never invent songs.
 - Pick ${Math.max(target - 3, 8)}–${target + 3} songs whose TITLES, read in order, form the poem.
+- Write it the way a poet does: each next line should follow from the lines already written — completing a dangling thought, answering a question, deepening or turning the image — not just repeating the title's keywords. Let the poem drift where the previous lines lead it.
 - Give it an arc: an opening line that sets a feeling, development, a turn about two-thirds in, and a closing cadence that resolves (the last 2-3 lines should land like an ending).
-- Titles should flow into each other grammatically where possible.
 - Respond with ONLY a JSON array of the chosen song numbers in poem order, e.g. [12, 5, 88].
 
 Songs:

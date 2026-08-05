@@ -1,10 +1,12 @@
 // Poem composer: selects and orders liked-song titles so they read as a poem.
 //
-// A playlist poem has an arc:
-//   opener  — a feeling or address ("I guess I just feel like", "When you're around")
-//   body    — imagery and statements that develop the theme
-//   turn    — a shift about two-thirds through (a question, "But...", time passing)
-//   closer  — a cadence that resolves ("I will not say goodbye", "Until the day I die")
+// The poem is written the way a person writes one — line by line. The first
+// line sets a feeling (or the user chooses it). Every next line is chosen by
+// how well it FOLLOWS what came before: the previous line most of all, the
+// line before that a little, the poem's accumulated mood after that, and the
+// title only as a gentle pull. Grammar matters too — a line ending mid-thought
+// ("I will follow you into...") wants a line that completes it. The poem still
+// gets an arc: a turn about two-thirds through, and a closing cadence.
 
 // ---------- title cleanup ----------
 
@@ -26,7 +28,7 @@ const STOPWORDS = new Set(
   "a an the and or but so of to in on at for with from by is are was were be been am it its it's this that these those as if then than there here my your our his her their me you we they i he she them us up down out off over under into onto all some no not do does did don't can't won't will would can could should what when where why how who oh la na hey yeah ooh gonna wanna got get like just really very more most about".split(" ")
 );
 
-// Small concept lexicon so "night" matches "moon", "stars", "dark"...
+// Small concept lexicon so "night" can pull toward "moon", "stars", "dark"...
 const THEMES = {
   love: "love lover loving loved heart hearts kiss kissing darling baby honey sweet valentine romance adore devotion tender",
   loss: "goodbye gone lost lose losing missing miss cry crying tears broken break apart leave leaving left alone lonely empty fade grief mourn",
@@ -80,7 +82,7 @@ function themesOf(tokens) {
   return found;
 }
 
-// ---------- line roles ----------
+// ---------- line roles & grammar ----------
 
 const OPENER_STARTS = /^(i |i'm |i've |i'll |we |we're |you |you're |your |it's |this |these |sometimes |when |lately |all |every |dear |hello |hey |here |there's |my |the first)/i;
 const CONNECTOR_STARTS = /^(and |but |so |then |now |'?cause |because |still |even |until |till |after |before |maybe |or |if )/i;
@@ -97,24 +99,26 @@ export function classifyLine(title) {
   return roles;
 }
 
-// ---------- scoring ----------
+// A line that ends mid-thought invites the next line to complete it.
+const DANGLING_END = new Set(
+  "in into on onto of to for with without from by at around through like as before after until till near over under beneath beyond about the a an my your our his her their and or but so if when where because 'cause is are was were be am feel feels need needs want wants love loves see know knows found take hold make let gonna wanna will would could should can don't won't can't say keep got have had give bring watch hear call miss remember you me".split(" ")
+);
+// A natural way to pick up a dangling thought.
+const COMPLETION_START = new Set(
+  "the a an my your our his her their this that these those i i'm i'll i've you you're we we're it it's there here me us them him her everything nothing something someone everybody nobody".split(" ")
+);
+const ANSWER_START = /^(i |i'm |i'll |i've |'?cause |because |maybe |yes |no |well |guess |i don't|it's |only |just )/i;
 
-function scoreTrack(track, topicTokens, topicThemes) {
-  const tokens = track._tokens;
-  let score = 0;
-  for (const t of tokens) {
-    if (STOPWORDS.has(t)) continue;
-    if (topicTokens.has(t)) score += 4;
-    else if (topicTokens.has(t.replace(/s$/, "")) || topicTokens.has(t + "s")) score += 3;
-  }
-  for (const th of track._themes) if (topicThemes.has(th)) score += 2;
-  const wc = tokens.length;
-  if (wc >= 2 && wc <= 6) score += 1; // readable line length
-  if (wc > 9) score -= 1;
-  return score;
+const FINALITY = [
+  [/(die|dying|the end|eternity|evermore|until the|till the)/i, 4],
+  [/(goodbye|farewell|see you|meet again|last )/i, 3],
+  [/(forever|always|never let|won't let|still be|rest|sleep|amen|carry me|home)/i, 2],
+];
+function finality(t) {
+  return FINALITY.reduce((s, [re, w]) => (re.test(t.line) ? s + w : s), 0);
 }
 
-// ---------- seeded shuffle so "regenerate" gives a new-but-stable poem ----------
+// ---------- seeded RNG so "regenerate" gives a new-but-stable poem ----------
 
 function mulberry32(seed) {
   return function () {
@@ -125,7 +129,7 @@ function mulberry32(seed) {
   };
 }
 
-// ---------- composer ----------
+// ---------- library prep ----------
 
 export function prepareLibrary(tracks) {
   return tracks.map((t) => {
@@ -135,118 +139,236 @@ export function prepareLibrary(tracks) {
       ...t,
       line,
       _tokens: tokens,
+      _content: [...new Set(tokens.filter((w) => !STOPWORDS.has(w)))],
       _themes: themesOf(tokens),
       _roles: classifyLine(line),
     };
   });
 }
 
+export function trackKey(t) {
+  return t.uri || `${t.line}::${t.artist}`;
+}
+
+/** Find a track in the library by (fuzzy) title, optionally narrowed by artist. */
+export function findTrack(library, title, artist = "") {
+  const wantTitle = cleanTitle(title).toLowerCase();
+  const wantArtist = artist.trim().toLowerCase();
+  if (!wantTitle) return null;
+  const candidates = library.filter((t) => {
+    const have = t.line.toLowerCase();
+    const titleHit = have === wantTitle || have.includes(wantTitle) || wantTitle.includes(have);
+    const artistHit = !wantArtist || t.artist.toLowerCase().includes(wantArtist);
+    return titleHit && artistHit;
+  });
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => {
+    const ax = a.line.toLowerCase() === wantTitle ? 0 : 1;
+    const bx = b.line.toLowerCase() === wantTitle ? 0 : 1;
+    return ax - bx || a.line.length - b.line.length;
+  });
+  return candidates[0];
+}
+
+// ---------- scoring the NEXT line, given what's already written ----------
+
+function overlapScore(aContent, bContent) {
+  if (!aContent.length || !bContent.length) return 0;
+  let n = 0;
+  const bSet = new Set(bContent);
+  for (const w of aContent) {
+    if (bSet.has(w) || bSet.has(w + "s") || bSet.has(w.replace(/s$/, ""))) n++;
+  }
+  return n;
+}
+
+function themeOverlap(aThemes, bThemes) {
+  let n = 0;
+  for (const th of aThemes) if (bThemes.has(th)) n++;
+  return n;
+}
+
+function scoreNext(cand, ctx) {
+  const { prev, prev2, moodCounts, wordCounts, topicContent, topicThemes, anaphoraRun, position, target, rand } = ctx;
+  let s = 0;
+
+  // Every association channel decays as its word/theme gets used, so the
+  // poem moves through associations instead of circling one word forever.
+  const wordUse = (w) =>
+    wordCounts.get(w) || wordCounts.get(w + "s") || wordCounts.get(w.replace(/s$/, "")) || 0;
+  const wordLink = (w) => 1 / (1 + wordUse(w));
+  const themeLink = (th) => 1 / (1 + (moodCounts.get(th) || 0) * 0.5);
+
+  const matches = (set, w) => set.has(w) || set.has(w + "s") || set.has(w.replace(/s$/, ""));
+
+  // 1. Follow the previous line (the strongest voice in the room)
+  if (prev) {
+    const prevSet = new Set(prev._content);
+    for (const w of cand._content) if (matches(prevSet, w)) s += 3 * wordLink(w);
+    for (const th of cand._themes) if (prev._themes.has(th)) s += 2.5 * themeLink(th);
+  }
+  // 2. ...and the line before it, more faintly
+  if (prev2) {
+    const prev2Set = new Set(prev2._content);
+    for (const w of cand._content) if (matches(prev2Set, w)) s += 1.2 * wordLink(w);
+    for (const th of cand._themes) if (prev2._themes.has(th)) s += 1 * themeLink(th);
+  }
+  // 3. The poem's accumulated mood (every line so far votes on the themes)
+  let mood = 0;
+  for (const th of cand._themes) mood += Math.min(moodCounts.get(th) || 0, 3) * 0.4;
+  s += Math.min(mood, 2.5);
+
+  // 4. A gentle pull from the title/description — an anchor, not a filter
+  //    (it decays too: once the poem has said "new" twice, stop pushing it)
+  const topicSet = new Set(topicContent);
+  for (const w of cand._content) if (matches(topicSet, w)) s += 1.5 * wordLink(w);
+  for (const th of cand._themes) if (topicThemes.has(th)) s += 0.8 * themeLink(th);
+
+  // 5. Grammar: does this line pick up where the last one left off?
+  if (prev) {
+    const prevLast = prev._tokens[prev._tokens.length - 1];
+    const candFirst = cand._tokens[0];
+    const prevDangles = DANGLING_END.has(prevLast);
+    if (prevDangles && COMPLETION_START.has(candFirst)) s += 3;
+    if (prev._roles.includes("question") && ANSWER_START.test(cand.line)) s += 2.5;
+    if (cand._roles.includes("connector")) s += 1.2;
+
+    // Anaphora ("I think... / I think... "): lovely once, tired by the fourth time
+    if (candFirst && candFirst === prev._tokens[0]) {
+      s += anaphoraRun === 1 ? 2 : anaphoraRun === 2 ? 0.5 : -4;
+    }
+    if (prev.artist && prev.artist === cand.artist) s -= 2;
+  }
+
+  // 6. Don't ride one word into the ground — an echo is nice, a rut isn't
+  let repetition = 0;
+  for (const w of cand._content) repetition += Math.max(wordUse(w) - 1, 0);
+  s -= Math.min(repetition * 2.2, 6);
+
+  // 7. Readable line length
+  const wc = cand._tokens.length;
+  if (wc >= 2 && wc <= 6) s += 0.8;
+  if (wc > 9) s -= 1;
+
+  // 8. The arc: hold endings back, then lean into them; a question near the turn
+  const progress = position / Math.max(target - 1, 1);
+  const fin = finality(cand);
+  if (cand._roles.includes("closer") || fin > 0) {
+    if (progress < 0.7) s -= 2.5 + fin * 1.5;
+    else s += fin * 1.4 * ((progress - 0.7) / 0.3);
+  }
+  const turnAt = Math.round(target * 0.62);
+  if (cand._roles.includes("question") && Math.abs(position - turnAt) <= 1) s += 2;
+  if (cand._roles.includes("question") && progress > 0.85) s -= 2; // don't end on a shrug
+
+  // 9. A little chance, so regenerating explores
+  s += rand() * 1.4;
+  return s;
+}
+
+// ---------- composer ----------
+
 /**
- * Compose a poem.
- * @param {Array} library  prepared tracks (from prepareLibrary)
- * @param {string} title   the poem's title
- * @param {string} about   optional extra description
- * @param {number} target  desired number of lines
- * @param {number} seed    change to regenerate a different poem
+ * Compose a poem, one line at a time.
+ * @param {Array}  library   prepared tracks (from prepareLibrary)
+ * @param {string} title     the poem's title
+ * @param {string} about     optional extra description
+ * @param {number} target    desired number of lines
+ * @param {number} seed      change to regenerate a different poem
+ * @param {Object} firstSong optional track (from this library) to open with
  * @returns {Array} ordered subset of library
  */
-export function composePoem(library, title, about = "", target = 14, seed = 1) {
+export function composePoem(library, title, about = "", target = 14, seed = 1, firstSong = null) {
   const rand = mulberry32(seed * 2654435761);
-  const topicTokens = new Set(tokenize(title + " " + about).filter((t) => !STOPWORDS.has(t)));
-  const topicThemes = themesOf([...topicTokens]);
+  const topicTokens = tokenize(title + " " + about);
+  const topicContent = topicTokens.filter((w) => !STOPWORDS.has(w));
+  const topicThemes = themesOf(topicTokens);
 
-  // Score everything. On-topic tracks always outrank neutral ones; the random
-  // jitter only reshuffles within those bands so "regenerate" explores the
-  // library without letting off-topic lines crowd out relevant ones.
-  const scored = library
-    .map((t) => {
-      const base = scoreTrack(t, topicTokens, topicThemes);
-      return { t, base, s: base * 10 + rand() * 8 };
-    })
-    .sort((a, b) => b.s - a.s);
-
-  const poolSize = Math.max(target * 6, 60);
-  const pool = scored.slice(0, poolSize).map((x) => x.t);
   const used = new Set();
   const lines = [];
+  const moodCounts = new Map();
+  const wordCounts = new Map();
 
-  const pick = (predicate) => {
-    let best = null;
-    for (const t of pool) {
-      if (used.has(t.uri || t.line)) continue;
-      if (predicate && !predicate(t)) continue;
-      // avoid starting adjacent lines with the same word, or same artist twice in a row
-      const prev = lines[lines.length - 1];
-      if (prev) {
-        if (prev._tokens[0] && prev._tokens[0] === t._tokens[0]) continue;
-        if (prev.artist && prev.artist === t.artist) continue;
-      }
-      best = t;
-      break;
-    }
-    if (best) {
-      used.add(best.uri || best.line);
-      lines.push(best);
-    }
-    return best;
+  const commit = (t) => {
+    used.add(trackKey(t));
+    used.add(t.line.toLowerCase()); // same title from a different artist is still the same line
+    lines.push(t);
+    for (const th of t._themes) moodCounts.set(th, (moodCounts.get(th) || 0) + 1);
+    for (const w of t._content) wordCounts.set(w, (wordCounts.get(w) || 0) + 1);
   };
 
-  const hasRole = (r) => (t) => t._roles.includes(r);
-  const notRole = (r) => (t) => !t._roles.includes(r);
-
-  // 1. opener
-  pick(hasRole("opener")) || pick(notRole("closer")) || pick();
-
-  // 2. body with a turn ~2/3 through
-  const bodyCount = Math.max(target - 4, 4);
-  const turnAt = Math.floor(bodyCount * 0.62);
-  for (let i = 0; i < bodyCount; i++) {
-    if (i === turnAt) {
-      pick(hasRole("question")) || pick(hasRole("connector")) || pick();
-      continue;
+  // --- line 1: the user's choice, or the best opening feeling ---
+  if (firstSong) {
+    commit(firstSong);
+  } else {
+    let best = null, bestScore = -Infinity;
+    for (const t of library) {
+      let s = overlapScore(t._content, topicContent) * 2.5 + themeOverlap(t._themes, topicThemes) * 1.5;
+      if (t._roles.includes("opener")) s += 2.5;
+      if (t._roles.includes("closer") || finality(t) > 0) s -= 3;
+      if (t._tokens.length >= 2 && t._tokens.length <= 7) s += 0.8;
+      s += rand() * 1.6;
+      if (s > bestScore) { bestScore = s; best = t; }
     }
-    // alternate texture: image, image, connector...
-    if (i % 3 === 2) pick(hasRole("connector")) || pick(notRole("closer")) || pick();
-    else pick(notRole("closer")) || pick();
+    if (!best) return [];
+    commit(best);
   }
 
-  // 3. closing cadence: 2–3 closers, strongest ending last
-  const FINALITY = [
-    [/(die|dying|the end|eternity|evermore|until the|till the)/i, 4],
-    [/(goodbye|farewell|see you|meet again|last)/i, 3],
-    [/(forever|always|never let|won't let|still be|rest|sleep|amen)/i, 2],
-  ];
-  const finality = (t) => FINALITY.reduce((s, [re, w]) => (re.test(t.line) ? s + w : s), 0);
-
-  const closerWanted = target >= 16 ? 3 : 2;
-  const closers = [];
-  for (let i = 0; i < closerWanted; i++) {
-    const c = pick(hasRole("closer"));
-    if (c) { closers.push(c); lines.pop(); }
+  // --- every next line follows from what's written so far ---
+  let anaphoraRun = 0;
+  while (lines.length < target) {
+    const prev = lines[lines.length - 1];
+    const prev2 = lines[lines.length - 2] || null;
+    const ctx = {
+      prev, prev2, moodCounts, wordCounts, topicContent, topicThemes,
+      anaphoraRun, position: lines.length, target, rand,
+    };
+    const usedLines = lines.map((l) => l.line.toLowerCase());
+    let best = null, bestScore = -Infinity;
+    for (const t of library) {
+      if (used.has(trackKey(t)) || used.has(t.line.toLowerCase())) continue;
+      const cl = t.line.toLowerCase();
+      if (usedLines.some((u) => u.includes(cl) || cl.includes(u))) continue; // "Last Goodbye" after "The Last Goodbye"
+      const s = scoreNext(t, ctx);
+      if (s > bestScore) { bestScore = s; best = t; }
+    }
+    if (!best) break; // library exhausted
+    anaphoraRun = best._tokens[0] === prev._tokens[0] ? anaphoraRun + 1 : 0;
+    commit(best);
   }
-  closers.sort((a, b) => finality(a) - finality(b));
 
-  // pad the body (never after the ending) if the library ran short
-  while (lines.length + closers.length < target && pick(notRole("closer"))) { /* keep padding */ }
+  // --- make sure the poem lands: strongest ending last ---
+  const tail = lines.slice(-3);
+  tail.sort((a, b) => finality(a) - finality(b));
+  lines.splice(lines.length - 3, 3, ...tail);
 
-  lines.push(...closers);
   return lines;
 }
 
-/** Alternative lines for swapping one out — same vibe, not used yet. */
+/** Alternative lines for swapping one out — what would follow just as well. */
 export function suggestAlternatives(library, poemLines, replacing, title, about, limit = 12) {
-  const topicTokens = new Set(tokenize(title + " " + about).filter((t) => !STOPWORDS.has(t)));
-  const topicThemes = themesOf([...topicTokens]);
-  const usedKeys = new Set(poemLines.map((l) => l.uri || l.line));
-  const sameRole = new Set(replacing?._roles || []);
+  const idx = poemLines.indexOf(replacing);
+  const prev = idx > 0 ? poemLines[idx - 1] : null;
+  const prev2 = idx > 1 ? poemLines[idx - 2] : null;
+  const topicTokens = tokenize(title + " " + about);
+  const topicContent = topicTokens.filter((w) => !STOPWORDS.has(w));
+  const topicThemes = themesOf(topicTokens);
+  const moodCounts = new Map();
+  const wordCounts = new Map();
+  for (const l of poemLines) {
+    for (const th of l._themes) moodCounts.set(th, (moodCounts.get(th) || 0) + 1);
+    for (const w of l._content) wordCounts.set(w, (wordCounts.get(w) || 0) + 1);
+  }
+  const usedKeys = new Set(poemLines.map(trackKey));
+  const rand = mulberry32(idx + 99);
+  const ctx = {
+    prev, prev2, moodCounts, wordCounts, topicContent, topicThemes,
+    anaphoraRun: 0, position: Math.max(idx, 0), target: Math.max(poemLines.length, 1), rand,
+  };
 
   return library
-    .filter((t) => !usedKeys.has(t.uri || t.line))
-    .map((t) => {
-      let s = scoreTrack(t, topicTokens, topicThemes);
-      if (t._roles.some((r) => sameRole.has(r))) s += 2;
-      return { t, s };
-    })
+    .filter((t) => !usedKeys.has(trackKey(t)))
+    .map((t) => ({ t, s: scoreNext(t, ctx) }))
     .sort((a, b) => b.s - a.s)
     .slice(0, limit)
     .map((x) => x.t);

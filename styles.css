@@ -65,17 +65,22 @@ body {
 
 .hero { text-align: center; padding: 72px 0 40px; }
 
+svg.app-icon {
+  width: 84px; height: 84px; display: block; margin: 0 auto 28px;
+  border-radius: 50%;
+  filter: drop-shadow(0 10px 24px rgba(27, 44, 193, 0.35));
+}
 .app-icon {
-  width: 76px; height: 76px; margin: 0 auto 28px;
-  border-radius: 18px;
+  margin: 0 auto 28px;
+}
+div.app-icon {
+  width: 76px; height: 76px;
+  border-radius: 50%;
   background: linear-gradient(160deg, var(--cornflower) 0%, var(--persian) 78%);
   box-shadow: 0 10px 30px rgba(27, 44, 193, 0.35);
   display: flex; align-items: center; justify-content: center;
 }
-.app-icon span {
-  font-family: var(--serif); font-style: italic; font-size: 2.4rem;
-  color: #fff; transform: translateY(-2px);
-}
+div.app-icon span { font-size: 2.2rem; color: #fff; }
 
 .hero h1 {
   font-size: clamp(2.8rem, 8vw, 4rem);
@@ -213,12 +218,7 @@ textarea { resize: vertical; }
   padding: 10px 0 34px;
 }
 .brand { font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 9px; }
-.brand-mark {
-  width: 28px; height: 28px; border-radius: 8px;
-  background: linear-gradient(160deg, var(--cornflower), var(--persian));
-  color: #fff; font-family: var(--serif); font-style: italic; font-weight: 400;
-  display: inline-flex; align-items: center; justify-content: center; font-size: 1rem;
-}
+svg.brand-mark { width: 28px; height: 28px; border-radius: 50%; }
 
 /* ---------- compose ---------- */
 
@@ -228,6 +228,8 @@ textarea { resize: vertical; }
   margin-top: 26px; margin-bottom: 2px;
 }
 .options-row { display: flex; gap: 14px; margin-top: 20px; }
+.first-song-row { margin-top: 8px; }
+.first-song-row + .footnote { margin-top: 8px; }
 .option { flex: 1; }
 #btn-compose { margin-top: 30px; }
 #claude-key-row { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }

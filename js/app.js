@@ -1,5 +1,5 @@
 import * as spotify from "./spotify.js";
-import { prepareLibrary, composePoem, suggestAlternatives, poemToText } from "./poem.js";
+import { prepareLibrary, composePoem, suggestAlternatives, poemToText, findTrack } from "./poem.js";
 import { composeWithClaude } from "./claude.js";
 import { DEMO_LIBRARY } from "./demo.js";
 
@@ -11,6 +11,7 @@ const state = {
   poem: [],         // current ordered lines
   title: "",
   about: "",
+  firstSong: null,  // user-chosen opening line
   seed: 1,
 };
 
@@ -99,6 +100,18 @@ $("btn-compose").addEventListener("click", async () => {
   state.seed = 1;
   const target = parseInt($("poem-length").value, 10);
 
+  // optional user-chosen first line — must exist in the library
+  const firstTitle = $("first-song-title").value.trim();
+  const firstArtist = $("first-song-artist").value.trim();
+  state.firstSong = null;
+  if (firstTitle) {
+    state.firstSong = findTrack(state.library, firstTitle, firstArtist);
+    if (!state.firstSong) {
+      setError("compose-error", `Couldn't find “${firstTitle}” in ${state.demo ? "the demo library" : "your Liked Songs"} — check the spelling, or leave it blank.`);
+      return;
+    }
+  }
+
   const btn = $("btn-compose");
   btn.disabled = true;
   btn.textContent = "Composing…";
@@ -106,9 +119,9 @@ $("btn-compose").addEventListener("click", async () => {
     if ($("engine").value === "claude") {
       const key = $("claude-key").value.trim();
       if (!key) throw new Error("Enter your Anthropic API key, or switch to the built-in composer.");
-      state.poem = await composeWithClaude(key, state.library, title, state.about, target);
+      state.poem = await composeWithClaude(key, state.library, title, state.about, target, state.firstSong);
     } else {
-      state.poem = composePoem(state.library, title, state.about, target, state.seed);
+      state.poem = composePoem(state.library, title, state.about, target, state.seed, state.firstSong);
     }
     renderPoem();
     show("screen-preview");
@@ -122,7 +135,7 @@ $("btn-compose").addEventListener("click", async () => {
 
 $("btn-regenerate").addEventListener("click", () => {
   state.seed += 1;
-  state.poem = composePoem(state.library, state.title, state.about, parseInt($("poem-length").value, 10), state.seed);
+  state.poem = composePoem(state.library, state.title, state.about, parseInt($("poem-length").value, 10), state.seed, state.firstSong);
   renderPoem();
 });
 
@@ -231,6 +244,8 @@ $("btn-save").addEventListener("click", async () => {
 $("btn-another").addEventListener("click", () => {
   $("poem-title").value = "";
   $("poem-about").value = "";
+  $("first-song-title").value = "";
+  $("first-song-artist").value = "";
   show("screen-compose");
 });
 
