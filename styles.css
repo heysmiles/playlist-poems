@@ -109,12 +109,72 @@ div.app-icon span { font-size: 2.2rem; color: #fff; }
 }
 .card-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
 
-.example-card { background: var(--bg-soft); border-color: transparent; box-shadow: none; text-align: center; }
-.example-lines {
-  font-family: var(--serif); font-style: italic;
-  font-size: 1.18rem; line-height: 1.75; color: var(--navy);
+/* ---------- Spotify-look example viewer ---------- */
+
+.examples { margin-top: 8px; }
+.examples .eyebrow { margin-bottom: 14px; }
+
+.example-tabs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.example-tab {
+  border: 1px solid var(--hairline);
+  background: var(--bg);
+  color: var(--dusk);
+  border-radius: 999px;
+  padding: 6px 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
 }
-.example-lines .ellipsis { color: var(--cornflower); letter-spacing: 4px; font-style: normal; }
+.example-tab:hover { background: var(--bg-soft); }
+.example-tab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+.sp-card {
+  background: #121212;
+  border-radius: 16px;
+  overflow: hidden;
+  max-height: 430px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-card);
+}
+.sp-header {
+  display: flex; align-items: flex-end; gap: 16px;
+  padding: 22px 20px 16px;
+}
+.sp-cover {
+  width: 84px; height: 84px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255, 255, 255, 0.9); font-size: 2rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.sp-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sp-type { color: #b3b3b3; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.sp-title { color: #fff; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.sp-sub { color: #b3b3b3; font-size: 0.8rem; }
+
+.sp-tracks { list-style: none; padding: 4px 8px 14px; }
+.sp-tracks li {
+  display: flex; align-items: center; gap: 14px;
+  padding: 7px 12px; border-radius: 6px;
+}
+.sp-tracks li:hover { background: #1d1d1d; }
+.sp-num { color: #b3b3b3; font-size: 0.85rem; width: 16px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.sp-cell { min-width: 0; }
+.sp-track { color: #fff; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-artist { color: #b3b3b3; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sp-card::-webkit-scrollbar { width: 10px; }
+.sp-card::-webkit-scrollbar-thumb { background: #3e3e3e; border-radius: 99px; border: 2px solid #121212; }
+.sp-card::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- about ---------- */
+
+.about { margin-top: 44px; padding: 0 6px 20px; }
+.about h2 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 10px; }
+.about p { color: var(--muted); font-size: 0.95rem; line-height: 1.65; margin-bottom: 10px; }
+.about a { color: var(--persian); text-decoration: none; }
+.about a:hover { text-decoration: underline; }
 
 .connect-box { display: flex; flex-direction: column; gap: 12px; }
 

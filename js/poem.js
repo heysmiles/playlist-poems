@@ -111,7 +111,7 @@ const ANSWER_START = /^(i |i'm |i'll |i've |'?cause |because |maybe |yes |no |we
 
 const FINALITY = [
   [/(die|dying|the end|eternity|evermore|until the|till the)/i, 4],
-  [/(goodbye|farewell|see you|meet again|last )/i, 3],
+  [/(goodbye|farewell|see you again|meet again|at last|last dance|last song|one last)/i, 3],
   [/(forever|always|never let|won't let|still be|rest|sleep|amen|carry me|home)/i, 2],
 ];
 function finality(t) {
@@ -201,22 +201,26 @@ function scoreNext(cand, ctx) {
 
   const matches = (set, w) => set.has(w) || set.has(w + "s") || set.has(w.replace(/s$/, ""));
 
-  // 1. Follow the previous line (the strongest voice in the room)
+  // 1. Sit next to the previous line the way poem lines do. Cohesion comes
+  //    from shared mood and grammar — NOT from repeating its words. A line
+  //    that echoes the word it just heard ("...into the Dark" → "After Dark")
+  //    reads as redundancy, not rhyme.
   if (prev) {
     const prevSet = new Set(prev._content);
-    for (const w of cand._content) if (matches(prevSet, w)) s += 3 * wordLink(w);
-    for (const th of cand._themes) if (prev._themes.has(th)) s += 2.5 * themeLink(th);
+    for (const w of cand._content) if (matches(prevSet, w)) s -= 2.2;
+    for (const th of cand._themes) if (prev._themes.has(th)) s += 2.6 * themeLink(th);
   }
-  // 2. ...and the line before it, more faintly
+  // 2. An echo of a line from further back is a callback, not a stutter —
+  //    allow a faint pull toward it.
   if (prev2) {
     const prev2Set = new Set(prev2._content);
-    for (const w of cand._content) if (matches(prev2Set, w)) s += 1.2 * wordLink(w);
+    for (const w of cand._content) if (matches(prev2Set, w)) s += 0.7 * wordLink(w);
     for (const th of cand._themes) if (prev2._themes.has(th)) s += 1 * themeLink(th);
   }
   // 3. The poem's accumulated mood (every line so far votes on the themes)
   let mood = 0;
-  for (const th of cand._themes) mood += Math.min(moodCounts.get(th) || 0, 3) * 0.4;
-  s += Math.min(mood, 2.5);
+  for (const th of cand._themes) mood += Math.min(moodCounts.get(th) || 0, 3) * 0.5;
+  s += Math.min(mood, 3);
 
   // 4. A gentle pull from the title/description — an anchor, not a filter
   //    (it decays too: once the poem has said "new" twice, stop pushing it)
@@ -250,12 +254,14 @@ function scoreNext(cand, ctx) {
   if (wc >= 2 && wc <= 6) s += 0.8;
   if (wc > 9) s -= 1;
 
-  // 8. The arc: hold endings back, then lean into them; a question near the turn
+  // 8. The arc: hold endings back, spend at most two of them at the close —
+  //    a poem ends once, not four times in a row
   const progress = position / Math.max(target - 1, 1);
   const fin = finality(cand);
   if (cand._roles.includes("closer") || fin > 0) {
-    if (progress < 0.7) s -= 2.5 + fin * 1.5;
-    else s += fin * 1.4 * ((progress - 0.7) / 0.3);
+    if (progress < 0.75) s -= 2.5 + fin * 1.5;
+    else if (ctx.closersSoFar >= 2) s -= 4;
+    else s += fin * 1.4 * ((progress - 0.75) / 0.25);
   }
   const turnAt = Math.round(target * 0.62);
   if (cand._roles.includes("question") && Math.abs(position - turnAt) <= 1) s += 2;
@@ -316,12 +322,13 @@ export function composePoem(library, title, about = "", target = 14, seed = 1, f
 
   // --- every next line follows from what's written so far ---
   let anaphoraRun = 0;
+  let closersSoFar = 0;
   while (lines.length < target) {
     const prev = lines[lines.length - 1];
     const prev2 = lines[lines.length - 2] || null;
     const ctx = {
       prev, prev2, moodCounts, wordCounts, topicContent, topicThemes,
-      anaphoraRun, position: lines.length, target, rand,
+      anaphoraRun, closersSoFar, position: lines.length, target, rand,
     };
     const usedLines = lines.map((l) => l.line.toLowerCase());
     let best = null, bestScore = -Infinity;
@@ -334,6 +341,7 @@ export function composePoem(library, title, about = "", target = 14, seed = 1, f
     }
     if (!best) break; // library exhausted
     anaphoraRun = best._tokens[0] === prev._tokens[0] ? anaphoraRun + 1 : 0;
+    if (best._roles.includes("closer") || finality(best) > 0) closersSoFar++;
     commit(best);
   }
 
@@ -361,9 +369,11 @@ export function suggestAlternatives(library, poemLines, replacing, title, about,
   }
   const usedKeys = new Set(poemLines.map(trackKey));
   const rand = mulberry32(idx + 99);
+  const closersSoFar = poemLines.slice(0, Math.max(idx, 0))
+    .filter((l) => l._roles.includes("closer") || finality(l) > 0).length;
   const ctx = {
     prev, prev2, moodCounts, wordCounts, topicContent, topicThemes,
-    anaphoraRun: 0, position: Math.max(idx, 0), target: Math.max(poemLines.length, 1), rand,
+    anaphoraRun: 0, closersSoFar, position: Math.max(idx, 0), target: Math.max(poemLines.length, 1), rand,
   };
 
   return library

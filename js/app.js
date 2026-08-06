@@ -2,6 +2,7 @@ import * as spotify from "./spotify.js";
 import { prepareLibrary, composePoem, suggestAlternatives, poemToText, findTrack } from "./poem.js";
 import { composeWithClaude } from "./claude.js";
 import { DEMO_LIBRARY } from "./demo.js";
+import { initExamples } from "./examples.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -250,6 +251,8 @@ $("btn-another").addEventListener("click", () => {
 });
 
 // ===================== boot =====================
+
+initExamples();
 
 (async function boot() {
   try {
