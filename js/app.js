@@ -99,7 +99,7 @@ $("engine").addEventListener("change", () => {
 
 $("btn-compose").addEventListener("click", async () => {
   const title = $("poem-title").value.trim();
-  if (!title) { setError("compose-error", "Every poem needs a title."); $("poem-title").focus(); return; }
+  if (!title) { setError("compose-error", "Come on... give your poem a title!!!"); $("poem-title").focus(); return; }
   setError("compose-error", "");
 
   state.title = title;
