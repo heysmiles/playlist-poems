@@ -27,11 +27,11 @@
           <path d="M32 66 C 42 61, 56 62, 64 67" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/>
         </svg>
         <h1>Playlist Poems</h1>
-        <p class="tagline">Spin up your Liked Songs in new ways &mdash; in poems!</p>
+        <p class="tagline">Shuffle your Liked Songs in new ways &mdash; in poems!</p>
       </div>
 
       <div class="examples">
-        <p class="eyebrow center">Real poems from my library &mdash; read the titles top to bottom</p>
+        <p class="eyebrow center">A bit confused? Here are some example poems I made from my Liked Songs, read from top to bottom</p>
         <div id="example-tabs" class="example-tabs"></div>
         <div id="sp-card" class="sp-card"></div>
       </div>
@@ -74,7 +74,7 @@
     <!-- ===================== COMPOSE SCREEN ===================== -->
     <section id="screen-compose" class="screen">
       <header class="topbar">
-        <span class="brand"><svg class="brand-mark" viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="lg-b1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7692ff"/><stop offset="1" stop-color="#1b2cc1"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#lg-b1)"/><path d="M26 39 C 40 32, 62 33, 75 42" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M29 53 C 41 47, 59 48, 70 55" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M32 66 C 42 61, 56 62, 64 67" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/></svg> Playlist Poems</span>
+        <button type="button" class="brand brand-home" id="btn-home-compose" title="Back to home"><svg class="brand-mark" viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="lg-b1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7692ff"/><stop offset="1" stop-color="#1b2cc1"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#lg-b1)"/><path d="M26 39 C 40 32, 62 33, 75 42" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M29 53 C 41 47, 59 48, 70 55" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M32 66 C 42 61, 56 62, 64 67" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/></svg> Playlist Poems</button>
         <span id="library-stats" class="muted small"></span>
         <button id="btn-logout" class="btn btn-quiet btn-small">Disconnect</button>
       </header>
@@ -95,7 +95,7 @@
             <input id="first-song-artist" type="text" placeholder="Artist (optional)" autocomplete="off" />
           </div>
         </div>
-        <p class="footnote">The poem's first line — it has to be a song in your library.</p>
+        <p class="footnote" id="first-song-note">The poem's first line — it has to be a song in your library.</p>
 
         <div class="options-row">
           <div class="option">
@@ -131,21 +131,33 @@
     <section id="screen-preview" class="screen">
       <header class="topbar">
         <button id="btn-back" class="btn btn-quiet btn-small">&larr; Start over</button>
-        <span class="brand"><svg class="brand-mark" viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="lg-b2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7692ff"/><stop offset="1" stop-color="#1b2cc1"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#lg-b2)"/><path d="M26 39 C 40 32, 62 33, 75 42" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M29 53 C 41 47, 59 48, 70 55" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M32 66 C 42 61, 56 62, 64 67" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/></svg></span>
+        <button type="button" class="brand brand-home" id="btn-home-preview" title="Back to home"><svg class="brand-mark" viewBox="0 0 96 96" aria-hidden="true"><defs><linearGradient id="lg-b2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7692ff"/><stop offset="1" stop-color="#1b2cc1"/></linearGradient></defs><circle cx="48" cy="48" r="48" fill="url(#lg-b2)"/><path d="M26 39 C 40 32, 62 33, 75 42" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M29 53 C 41 47, 59 48, 70 55" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M32 66 C 42 61, 56 62, 64 67" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/></svg></button>
         <button id="btn-regenerate" class="btn btn-quiet btn-small">Regenerate</button>
       </header>
 
-      <h2 id="preview-title" class="poem-title"></h2>
-      <p id="preview-about" class="muted center small"></p>
+      <div id="demo-hint" class="demo-hint hidden">
+        <p><b>These are building blocks.</b> The poem below is a first draft (probably not that good!) &mdash; it gives you pieces to move around and create as you'd like.</p>
+        <p>Hover over the right side of a song to move it up or down, delete it, or shuffle in a different song.</p>
+      </div>
 
-      <div class="card poem-card">
-        <ol id="poem-lines" class="poem"></ol>
+      <div class="sp-card sp-editor">
+        <div class="sp-header" id="preview-header">
+          <div class="sp-cover" id="preview-cover">&#9834;</div>
+          <div class="sp-meta">
+            <span class="sp-type">Playlist Poem</span>
+            <h3 class="sp-title" id="preview-title"></h3>
+            <span class="sp-sub" id="preview-sub"></span>
+          </div>
+        </div>
+
+        <ol id="poem-lines" class="sp-tracks"></ol>
 
         <div class="add-line">
           <input id="line-search" type="text" placeholder="Add a line — search your songs" />
           <ul id="line-search-results" class="search-results hidden"></ul>
         </div>
       </div>
+      <p id="preview-about" class="muted center small preview-about"></p>
 
       <div class="save-row">
         <label class="checkbox"><input type="checkbox" id="playlist-public" /> Make playlist public</label>

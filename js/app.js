@@ -50,8 +50,13 @@ $("btn-demo").addEventListener("click", () => {
   state.demo = true;
   state.library = prepareLibrary(DEMO_LIBRARY);
   $("library-stats").textContent = `demo library · ${state.library.length} songs`;
+  $("first-song-note").textContent = "The poem's first line.";
   show("screen-compose");
 });
+
+// the logo is the way home
+$("btn-home-compose").addEventListener("click", () => show("screen-connect"));
+$("btn-home-preview").addEventListener("click", () => show("screen-connect"));
 
 $("btn-logout").addEventListener("click", () => {
   spotify.logout();
@@ -77,6 +82,7 @@ async function loadLibrary() {
     state.demo = false;
     state.library = prepareLibrary(tracks);
     $("library-stats").textContent = `${state.library.length} liked songs`;
+    $("first-song-note").textContent = "The poem's first line — it has to be a song in your library.";
     show("screen-compose");
   } catch (e) {
     alert(e.message);
@@ -146,26 +152,29 @@ $("btn-back").addEventListener("click", () => show("screen-compose"));
 
 function renderPoem() {
   $("preview-title").textContent = state.title;
+  $("preview-sub").textContent = `${state.poem.length} songs`;
   $("preview-about").textContent = state.about;
+  $("demo-hint").classList.toggle("hidden", !state.demo);
   const ol = $("poem-lines");
   ol.innerHTML = "";
 
   state.poem.forEach((line, i) => {
     const li = document.createElement("li");
-    li.className = "poem-line";
     li.innerHTML = `
-      <div class="line-text">
-        <div class="line-title"></div>
-        <div class="line-artist"></div>
+      <span class="sp-num"></span>
+      <div class="sp-cell">
+        <div class="sp-track"></div>
+        <div class="sp-artist"></div>
       </div>
       <div class="line-controls">
         <button title="Move up">↑</button>
         <button title="Move down">↓</button>
-        <button title="Swap for a similar line">⇄</button>
+        <button title="Swap for a different song">⇄</button>
         <button title="Remove line">✕</button>
       </div>`;
-    li.querySelector(".line-title").textContent = line.line;
-    li.querySelector(".line-artist").textContent = line.artist;
+    li.querySelector(".sp-num").textContent = i + 1;
+    li.querySelector(".sp-track").textContent = line.line;
+    li.querySelector(".sp-artist").textContent = line.artist;
 
     const [up, down, swap, del] = li.querySelectorAll("button");
     up.onclick = () => { if (i > 0) { [state.poem[i - 1], state.poem[i]] = [state.poem[i], state.poem[i - 1]]; renderPoem(); } };
