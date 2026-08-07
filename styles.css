@@ -114,6 +114,14 @@ div.app-icon span { font-size: 2.2rem; color: #fff; }
 .examples { margin-top: 8px; }
 .examples .eyebrow { margin-bottom: 14px; }
 
+.example-note {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--muted);
+  font-size: 1rem;
+  margin-bottom: 14px;
+}
+
 .example-tabs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
 .example-tab {
   border: 1px solid var(--hairline);
@@ -301,16 +309,25 @@ svg.brand-mark { width: 28px; height: 28px; border-radius: 50%; }
 
 /* ---------- preview / poem editor (Spotify-look, editable) ---------- */
 
-.demo-hint {
+.demo-hero { text-align: center; margin: 4px 0 22px; }
+.demo-title {
+  font-size: clamp(1.7rem, 5vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.demo-tagline { font-size: 1.05rem; margin-top: 8px; }
+.demo-hint-card {
   background: rgba(171, 210, 250, 0.25);
   border: 1px solid rgba(118, 146, 255, 0.35);
   border-radius: 14px;
-  padding: 14px 18px;
-  margin-bottom: 18px;
+  padding: 13px 18px;
+  margin-top: 16px;
+  color: var(--dusk);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  text-align: center;
 }
-.demo-hint p { color: var(--dusk); font-size: 0.88rem; line-height: 1.55; }
-.demo-hint p + p { margin-top: 6px; }
-.demo-hint b { color: var(--navy); }
+.demo-hint-card b { color: var(--navy); font-weight: 600; }
 
 .sp-editor { max-height: none; }
 .sp-editor .sp-tracks li { position: relative; padding-right: 8px; }
