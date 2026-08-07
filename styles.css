@@ -121,6 +121,9 @@ div.app-icon span { font-size: 2.2rem; color: #fff; }
   font-size: 1rem;
   margin-bottom: 14px;
 }
+@media (min-width: 560px) {
+  .example-note { white-space: nowrap; font-size: clamp(0.82rem, 2vw, 1rem); }
+}
 
 .example-tabs { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
 .example-tab {
@@ -316,6 +319,7 @@ svg.brand-mark { width: 28px; height: 28px; border-radius: 50%; }
   letter-spacing: -0.02em;
 }
 .demo-tagline { font-size: 1.05rem; margin-top: 8px; }
+.demo-blocks { display: block; width: 180px; max-width: 60%; margin: 20px auto 0; }
 .note-label { color: var(--navy); font-weight: 700; }
 .demo-hint-card {
   margin-top: 28px;
