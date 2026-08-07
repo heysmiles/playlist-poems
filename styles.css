@@ -319,7 +319,17 @@ svg.brand-mark { width: 28px; height: 28px; border-radius: 50%; }
   letter-spacing: -0.02em;
 }
 .demo-tagline { font-size: 1.05rem; margin-top: 8px; }
-.demo-blocks { display: block; width: 180px; max-width: 60%; margin: 20px auto 0; }
+.demo-blocks { display: block; width: 120px; max-width: 45%; margin: 4px auto 14px; }
+
+.made-by {
+  margin-top: 64px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--serif); font-style: italic;
+  color: var(--muted); font-size: 1rem;
+}
+.made-by a { display: inline-flex; }
+.made-by img { width: 20px; height: 20px; border-radius: 50%; display: block; }
+.made-by a:hover img { filter: brightness(1.1); }
 .note-label { color: var(--navy); font-weight: 700; }
 .demo-hint-card {
   margin-top: 28px;
