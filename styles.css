@@ -319,7 +319,7 @@ svg.brand-mark { width: 28px; height: 28px; border-radius: 50%; }
 .note-label { color: var(--navy); font-weight: 700; }
 .demo-hint-card {
   margin-top: 28px;
-  color: var(--dusk);
+  color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.6;
 }
