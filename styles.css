@@ -318,18 +318,13 @@ svg.brand-mark { width: 28px; height: 28px; border-radius: 50%; }
 .demo-tagline { font-size: 1.05rem; margin-top: 8px; }
 .note-label { color: var(--navy); font-weight: 700; }
 .demo-hint-card {
-  background: rgba(171, 210, 250, 0.25);
-  border: 1px solid rgba(118, 146, 255, 0.35);
-  border-radius: 14px;
-  padding: 16px 20px 15px;
   margin-top: 28px;
   color: var(--dusk);
   font-size: 0.88rem;
   line-height: 1.6;
 }
 .hint-title {
-  color: var(--navy); font-weight: 700; font-size: 0.8rem;
-  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--navy); font-weight: 700; font-size: 1.05rem;
   text-align: center; margin-bottom: 10px;
 }
 .hint-list {
