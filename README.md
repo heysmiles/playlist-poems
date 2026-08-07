@@ -1,16 +1,8 @@
-# 📜 Playlist Poems
+# Playlist Poems
 
-Turn your Spotify **Liked Songs** into poems. Every track title is a line; the playlist is the poem.
+Shuffle your Spotify **Liked Songs** in a new way - in poems! Every track title is a line, the playlist is the poem.
 
-> *I guess I just feel like*
-> *When you're around*
-> *This is home*
-> *Don't look down*
-> *…*
-> *I will not say goodbye*
-> *Until the day I die*
-
-You give it a **title** and (optionally) **what it should be about**. It reads your Liked Songs, picks titles that read in order as a poem — with an opening, a development, a turn, and a closing cadence — lets you edit the lines, and saves the finished poem as a playlist straight into your Spotify library.
+You give it a **title** and (optionally) **what it should be about**. It reads your Liked Songs, picks titles that read in order as a poem — with an opening, a development, a turn, and a closing cadence. Then (in order to actually stay creative) you can to edit the lines and build onto the building blocks you were given. After you've created, it saves the finished poem as a playlist straight into your Spotify library.
 
 **Everything runs in your browser.** No server, no database, nothing stored anywhere but your own machine. Your Spotify login happens on spotify.com via OAuth (PKCE) — this app never sees your password.
 
